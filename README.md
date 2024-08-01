@@ -28,5 +28,5 @@ As a part of the assignment instructions, you will setup your assignment repo to
 Note that the unit tests will fail on this repository, since assignments are not yet implemented.  That's your job :) 
 
 
-![example workflow](https://github.com/cu-ecen-aeld/assignment-1-fabianmpa/.github/workflows/github-actions.ymlbadge.svg)
+![workflow](https://github.com/cu-ecen-aeld/assignment-1-fabianmpa/.github/workflows/github-actions.yml/badge.svg)
 
