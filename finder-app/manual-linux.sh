@@ -46,7 +46,7 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
 fi
 
 echo "Adding the Image in outdir"
-
+cp ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ${OUTDIR}
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
 if [ -d "${OUTDIR}/rootfs" ]
@@ -80,35 +80,40 @@ make distclean
 make defconfig
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
-
+sudo chown root:root /tmp/aeld/rootfs/bin/busybox
 echo "Library dependencies"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
+${CROSS_COMPILE}readelf -a /tmp/aeld/rootfs/bin/busybox | grep "program interpreter"
+${CROSS_COMPILE}readelf -a /tmp/aeld/rootfs/bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
 PROGINT=$( find -L ${HOME} -type f -name ld-linux-aarch64.so.1 )
 cp ${PROGINT} ${OUTDIR}/rootfs/lib
 LIBM=$( find -L ${HOME} -type f -name libm.so.6 )
 cp ${LIBM} ${OUTDIR}/rootfs/lib64
-LIBRESOLV=$( find -L ${HOME} -type f -name libresolv.so.6 )
+LIBRESOLV=$( find -L ${HOME} -type f -name libresolv.so.2 )
 cp ${LIBRESOLV} ${OUTDIR}/rootfs/lib64
 LIBC=$( find -L ${HOME} -type f -name libc.so.6 )
 cp ${LIBC} ${OUTDIR}/rootfs/lib64
-
 # TODO: Make device nodes
-sudo mknod -m 666 dev/null c 1 3
-sudo mknod -m 666 dev/console c 5 1
-
+sudo mknod -m 666 ${OUTDIR}/rootfs/dev/null c 1 3
+sudo mknod -m 666 ${OUTDIR}/rootfs/dev/console c 5 1
 # TODO: Clean and build the writer utility
-
+cd /home/linuxcoursera/linuxprogramming/assignment-1-fabianmpa/finder-app
+make clean
+make CROSS_COMPILE=aarch64-none-linux-gnu-
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
-
+cp writer ${OUTDIR}/rootfs/home
+cp finder.sh ${OUTDIR}/rootfs/home
+cp ../conf/username.txt ${OUTDIR}/rootfs/home
+cp ../conf/assignment.txt ${OUTDIR}/rootfs/home
+cp finder-test.sh ${OUTDIR}/rootfs/home
+cp autorun-qemu.sh ${OUTDIR}/rootfs/home
 # TODO: Chown the root directory
-
-# TODO: Create initramfs.cpio.gz
 cd ${OUTDIR}/rootfs
+sudo chown -R root:root *
+# TODO: Create initramfs.cpio.gz
 find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
-gzip -f initramfs.cpio
-
-.${HOME}/linuxprogramming/assignment-1-fabianmpa/finder-app/start-qemu-terminal.sh
+gzip -f ../initramfs.cpio
+cd ${HOME}/linuxprogramming/assignment-1-fabianmpa/finder-app
+./start-qemu-terminal.sh
