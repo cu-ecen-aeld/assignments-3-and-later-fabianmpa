@@ -80,7 +80,7 @@ make distclean
 make defconfig
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
-sudo chown root:root /tmp/aeld/rootfs/bin/busybox
+
 echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a /tmp/aeld/rootfs/bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a /tmp/aeld/rootfs/bin/busybox | grep "Shared library"
