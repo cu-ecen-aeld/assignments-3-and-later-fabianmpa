@@ -13,6 +13,7 @@ FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
 SYSROOT=$( aarch64-none-linux-gnu-gcc -print-sysroot )
+WORKING_DIR=$( pwd )
 
 if [ $# -lt 1 ]
 then
@@ -99,7 +100,7 @@ cp -a ${SYSROOT}/lib64/libc-2.33.so lib64
 sudo mknod -m 666 ${OUTDIR}/rootfs/dev/null c 1 3
 sudo mknod -m 666 ${OUTDIR}/rootfs/dev/console c 5 1
 # TODO: Clean and build the writer utility
-cd /home/linuxcoursera/linuxprogramming/assignment-1-fabianmpa/finder-app
+cd ${WORKING_DIR}
 make clean
 make CROSS_COMPILE=aarch64-none-linux-gnu-
 # TODO: Copy the finder related scripts and executables to the /home directory
@@ -116,5 +117,3 @@ sudo chown -R root:root *
 # TODO: Create initramfs.cpio.gz
 find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
 gzip -f ../initramfs.cpio
-cd ${HOME}/linuxprogramming/assignment-1-fabianmpa/finder-app
-./start-qemu-terminal.sh
