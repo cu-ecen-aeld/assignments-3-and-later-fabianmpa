@@ -12,6 +12,7 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
+SYSROOT=$( aarch64-none-linux-gnu-gcc -print-sysroot )
 
 if [ $# -lt 1 ]
 then
@@ -84,16 +85,16 @@ make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} 
 echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
-
+cd ${OUTDIR}/rootfs
 # TODO: Add library dependencies to rootfs
-PROGINT=$( find -L ${HOME} -type f -name ld-linux-aarch64.so.1 )
-cp ${PROGINT} ${OUTDIR}/rootfs/lib
-LIBM=$( find -L ${HOME} -type f -name libm.so.6 )
-cp ${LIBM} ${OUTDIR}/rootfs/lib64
-LIBRESOLV=$( find -L ${HOME} -type f -name libresolv.so.2 )
-cp ${LIBRESOLV} ${OUTDIR}/rootfs/lib64
-LIBC=$( find -L ${HOME} -type f -name libc.so.6 )
-cp ${LIBC} ${OUTDIR}/rootfs/lib64
+cp -a ${SYSROOT}/lib/ld-linux-aarch64.so.1 lib
+cp -a ${SYSROOT}/lib64/ld-2.33.so lib64
+cp -a ${SYSROOT}/lib64/libm.so.6 lib64
+cp -a ${SYSROOT}/lib64/libm-2.33.so lib64
+cp -a ${SYSROOT}/lib64/libresolv.so.2 lib64
+cp -a ${SYSROOT}/lib64/libresolv-2.33.so lib64
+cp -a ${SYSROOT}/lib64/libc.so.6 lib64
+cp -a ${SYSROOT}/lib64/libc-2.33.so lib64
 # TODO: Make device nodes
 sudo mknod -m 666 ${OUTDIR}/rootfs/dev/null c 1 3
 sudo mknod -m 666 ${OUTDIR}/rootfs/dev/console c 5 1
