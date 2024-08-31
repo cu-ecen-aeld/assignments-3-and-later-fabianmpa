@@ -1,10 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
 FILESDIR=$1
 SEARCHSTR=$2
 NUMBEROFFILES=0
 NUMBEROFMATCHES=0
-WORKINGDIR=$( pwd ) #for testing purposes
 
 touch tmp.txt
 touch matches.txt

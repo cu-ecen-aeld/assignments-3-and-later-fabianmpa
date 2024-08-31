@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/bin/sh
 
-WORKINGDIR=$( pwd )             #for testing purposes
 PATHFILE=$1
 DIR=$( echo ${PATHFILE%/*} )    #extract only path name
 FILE=$( echo ${PATHFILE##*/} )  #extract only file name
