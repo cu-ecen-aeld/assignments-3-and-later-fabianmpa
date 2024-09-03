@@ -1,20 +1,11 @@
-CROSS_COMPILE=
-GCC=gcc
+CC=$(CROSS_COMPILE)gcc
+all:	writer
 
-build: writer.o
-			$(GCC) writer.o -o writer
-
-writer.o: writer.c
-			$(GCC) -c writer.c
-
-
-ifeq ($(CROSS_COMPILE),aarch64-none-linux-gnu-)
-GCC=aarch64-none-linux-gnu-gcc
-endif
+writer:	
+	$(CC) $(CFLAGS) -o writer writer.c
 
 clean:
-		rm -f *.o writer
-
+	rm -f *.o writer
 
 
 
