@@ -1,18 +1,12 @@
 .PHONY: all clean
 
-CFLAGS_EXTRA ?= -std=c99 -Wall -Werror -Wextra
-IN_EXT ?= .c
-LIBS :=
-OUT_EXT ?= .out
+all: writer.o
+			$(CC) $(CFLAGS) $(INCLUDE) $(LD_FLAGS)  \
+			writer.o -o writer
 
-OUTS := $(addsuffix $(OUT_EXT), $(basename $(wildcard *$(IN_EXT))))
-
-all: $(OUTS)
-%$(OUT_EXT): %$(IN_EXT)
-	$(CC) $(CFLAGS) $(CFLAGS_EXTRA) -o '$@' '$<' $(LIBS)
+writer.o: writer.c
+			$(CC) -c writer.c
 
 clean:
-	rm -f *'$(OUT_EXT)'
-
-
+		rm -f *.o writer
 
