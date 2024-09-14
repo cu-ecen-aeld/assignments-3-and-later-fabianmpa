@@ -1,0 +1,160 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <syslog.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <libexplain/bind.h>
+
+#define buffersize 0x4FFFU
+int sockfd, clnt_cn, fileDescriptor, pid;
+int char_count = 0U;
+struct in_addr address;
+struct sockaddr_in serv_addr, client_addr;
+socklen_t client_sock_size = sizeof(client_addr);
+ssize_t mlength = 0;
+char* recv_buffer = NULL;
+char* ret_buff = NULL;
+int isDeamon = 0U;;
+
+void sig_handler(int signo){
+    if(signo == SIGINT){
+        syslog(LOG_DEBUG,"Caught SIGINT signal! \n");
+    }
+    else if(signo == SIGTERM){
+        syslog(LOG_DEBUG,"Caught SIGTERM signal! \n");
+    }
+    else{
+        syslog(LOG_DEBUG,"Unexpected signal \n");
+    }
+    remove("/var/tmp/aesdsocketdata.txt");
+    free(recv_buffer);
+    free(ret_buff);
+    close(fileDescriptor);
+    close(sockfd);
+    close(clnt_cn);
+    closelog();
+    exit (EXIT_SUCCESS);
+}
+
+void fault_handler(){
+    free(recv_buffer);
+    free(ret_buff);
+    close(fileDescriptor);
+    close(sockfd);
+    closelog();
+    exit(EXIT_FAILURE);
+}
+
+int main(int argc, char** argv)
+{
+
+    if(argc > 1)
+    {
+        if(strcmp(argv[1],"-d") == 0)
+        {
+            isDeamon = 1U;
+        }
+    }
+
+    openlog("aesd", LOG_CONS | LOG_ERR, LOG_USER );
+    
+    if(signal(SIGINT,sig_handler) == SIG_ERR){
+        syslog(LOG_DEBUG, "Cannot handle SIGINT signal \n");
+    }
+    if(signal(SIGTERM,sig_handler) == SIG_ERR){
+        syslog(LOG_DEBUG, "Cannot handle SIGTERM signal \n");
+    }
+
+    /* Create file where received data shall be stored */
+    syslog(LOG_DEBUG, "Opening file.. ");
+    fileDescriptor = creat("/var/tmp/aesdsocketdata.txt", 0644);
+    if(fileDescriptor == -1){
+        syslog(LOG_ERR, "ERROR: File could not be created");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Create socket*/
+    sockfd = socket(AF_INET,SOCK_STREAM, IPPROTO_TCP);
+    if(sockfd == -1)
+    {
+        syslog(LOG_ERR, "Socket not created ");
+        fault_handler();
+    }
+
+    int yes = 1;
+    if(setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) == -1){
+        syslog(LOG_ERR, "ERROR: socket options failed");
+        fault_handler();
+    }
+
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(9000);
+
+    if(bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1 ){
+        fprintf(stderr, "%s \n", explain_bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr) ));
+        syslog(LOG_DEBUG, "Binding unsuccessful");
+        fault_handler();
+    }
+    
+    if(isDeamon == 1U){
+        int ret = daemon(0U,0U);
+        if(ret != 0){ syslog(LOG_DEBUG, "Daemon creation failed"); exit(EXIT_FAILURE); }
+        syslog(LOG_DEBUG, "Running as deamon");
+    }else{
+        syslog(LOG_DEBUG, "Not running as daemon");
+    }
+
+    if(listen(sockfd, 20U) == -1){
+        syslog(LOG_DEBUG, "Listening unsuccessful");
+        fault_handler();
+    }
+
+    recv_buffer   = (char*) malloc(buffersize);
+    ret_buff      = (char*) malloc(buffersize);
+
+    if( (recv_buffer == NULL) | (ret_buff == NULL)){
+        syslog(LOG_DEBUG, "Not enough heap memory");
+        fault_handler();
+    }
+
+    while( 1 ) {
+        int ret;
+        clnt_cn = accept(sockfd, (struct sockaddr *) &client_addr, &client_sock_size);
+        if(clnt_cn > 0){
+            syslog(LOG_DEBUG,"Accepted connection from %s",inet_ntoa(client_addr.sin_addr));
+            mlength = read(clnt_cn, recv_buffer, buffersize);;
+            char_count = char_count + mlength;
+            if( mlength > 0 ){
+                ret = write(fileDescriptor,recv_buffer,mlength);
+                close(fileDescriptor);
+                fileDescriptor = open("/var/tmp/aesdsocketdata.txt", O_RDWR);
+                ret = pread(fileDescriptor, ret_buff, char_count,0);
+                ret = write(clnt_cn, ret_buff, char_count);
+                close(fileDescriptor);
+                fileDescriptor = open("/var/tmp/aesdsocketdata.txt", O_WRONLY | O_APPEND);
+                close(clnt_cn);
+                syslog(LOG_DEBUG,"Closed connection from %s",inet_ntoa(client_addr.sin_addr));
+                if(ret){;}
+            }
+            else{
+                close(clnt_cn);
+                break;
+            }
+        }
+        else{
+            syslog(LOG_DEBUG, "Connection not accepted");
+            close(clnt_cn);
+            break;
+        }
+    }
+    return 0;
+}
