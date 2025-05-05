@@ -137,31 +137,27 @@ int main(int argc, char** argv)
     int read_descriptor = open("/var/tmp/aesdsocketdata.txt", O_RDONLY);
 
     while( 1 ) {
-        int ret;
         clnt_cn = accept(sockfd, (struct sockaddr *) &client_addr, &client_sock_size);
         if(clnt_cn > 0){
             syslog(LOG_DEBUG,"Accepted connection from %s",inet_ntoa(client_addr.sin_addr));
             while((clnt_read_char = read(clnt_cn, recv_buffer, BUF_SIZE)) > 0 ){
                 packet_end = hasNewLine(recv_buffer,clnt_read_char);
                 char_count += clnt_read_char;
-                ret = write(write_descriptor,recv_buffer,clnt_read_char);
-                if(ret == -1){
+                if( (write(write_descriptor,recv_buffer,clnt_read_char)) == -1 ){
                     syslog(LOG_DEBUG, "Write error");
                     fault_handler();
                 }
                 if(packet_end){
                     if(char_count > BUF_SIZE){
                         while((ret_bytes = read(read_descriptor, ret_buff, BUF_SIZE)) > 0 ){
-                            ret = write(clnt_cn, ret_buff, ret_bytes);
-                            if(ret == -1){
+                            if((write(clnt_cn, ret_buff, ret_bytes)) == -1){
                                 syslog(LOG_DEBUG, "Write error");
                                 fault_handler();
                             }
                         }
                     }else{
                         int ret_bytes = pread(read_descriptor, ret_buff, BUF_SIZE,0);
-                        ret = write(clnt_cn, ret_buff, ret_bytes);
-                        if(ret == -1){
+                        if((write(clnt_cn, ret_buff, ret_bytes)) == -1){
                         syslog(LOG_DEBUG, "Write error");
                         fault_handler();
                         }
