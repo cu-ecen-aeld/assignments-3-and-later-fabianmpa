@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 all: aesdsocket.o
-			$(CC) aesdsocket.o -o aesdsocket -lexplain -L/usr/include
+			$(CC) aesdsocket.o -o aesdsocket
 			rm aesdsocket.o
 
 aesdsocket.o: aesdsocket.c

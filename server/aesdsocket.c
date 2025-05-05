@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
-#include <libexplain/bind.h>
 
 #define BUF_SIZE 1024
 int sockfd, clnt_cn, fileDescriptor, pid, write_descriptor, read_descriptor;
@@ -106,7 +105,6 @@ int main(int argc, char** argv)
     serv_addr.sin_port = htons(9000);
 
     if(bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1 ){
-        fprintf(stderr, "%s \n", explain_bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr) ));
         syslog(LOG_DEBUG, "Binding unsuccessful");
         fault_handler();
     }
