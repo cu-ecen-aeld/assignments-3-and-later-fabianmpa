@@ -1,11 +1,17 @@
+CROSS_COMPILE=
+GCC=gcc
 .PHONY: all clean
 
 all: aesdsocket.o
-			$(CC) aesdsocket.o -o aesdsocket
+			$(GCC) aesdsocket.o -o aesdsocket
 			rm aesdsocket.o
 
 aesdsocket.o: aesdsocket.c
-			$(CC) -g -O1 -c aesdsocket.c -Wall -Werror
+			$(GCC) -g -O1 -c aesdsocket.c -Wall -Werror
 
 clean:
 		rm -f *.o aesdsocket
+
+ifeq ($(CROSS_COMPILE),true)
+GCC=aarch64-none-linux-gnu-gcc
+endif
